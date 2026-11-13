@@ -50,7 +50,12 @@ Si en **Ajustes** está activado y apunta a la carpeta `app` de WhenGacha, apare
 - **Añadir a WhenGacha…** en la barra de elegidos y en cada ficha: convierte (vista previa 1280 px CRF 27, u original 1920 px CRF 26, a 24 fps),
   sube el mp4 al bucket R2 `whengacha-fondos` con wrangler (`npx wrangler login` en la carpeta app), copia el póster a `public/skins/<skin>/`,
   guarda copia en `fondos-skins/r2/`, lo añade a `FONDOS` en `src/skins/skins.ts` y su crédito en `public/acerca.html`.
-- La pestaña **WhenGacha**: los fondos de cada skin, ordenar (↑ ↓), quitar (con opción de borrarlo de R2), **Compilar** y **Subir a la web** (commit + push).
+- La pestaña **WhenGacha**: los fondos activos de cada skin (el vídeo se ve desde R2), ordenar (↑ ↓), quitar (con opción de borrarlo de R2), **Compilar** y **Subir a la web** (commit + push).
+- **Guardados sin usar**: los vídeos de esa skin que ya publicaste y no están en la rotación (copias en `fondos-skins/r2/` y `fondos-skins/antiguos/`).
+  «Activar» lo vuelve a poner sin convertir; solo lo resube a R2 si ya no está. El crédito se recupera del que se guardó al quitarlo
+  (`fondos-skins/creditos.json`) o del historial de git de `acerca.html`. Al quitar un fondo sin copia local, se baja antes de R2 para poder reactivarlo.
+- **Reemplazar** (en cada fondo activo): elige un guardado o busca uno nuevo («Buscar» / «Wallpaper Engine» → «Añadir a WhenGacha»);
+  el nuevo ocupa la misma posición y el reemplazado pasa a guardados (sigue en R2).
 
 Es lo mismo que hace `app/scripts/fondos/` (que sigue funcionando en el puerto 5199).
 

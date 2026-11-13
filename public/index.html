@@ -16,6 +16,8 @@
   <button id="btnQueue" class="qbtn" title="Ver la cola de descargas">Cola <b id="qCount">0</b></button>
 </header>
 
+<div class="replbar" id="replBar" hidden><span id="replTxt"></span><span class="grow"></span><button id="replGo" class="small">Ver guardados</button><button id="replCancel" class="small">Cancelar reemplazo</button></div>
+
 <div class="layout">
 <main>
   <!-- ============ BUSCAR ============ -->
@@ -77,6 +79,8 @@
     <div class="tabs" id="wgTabs"></div>
     <p class="sub" id="wgHint"></p>
     <div class="grid" id="wgGrid"></div>
+    <div class="toolbar inahead"><b id="wgInaTitle">Guardados sin usar</b><span class="muted">Vídeos de esta skin que ya publicaste y no están en la rotación (copias en fondos-skins/). Actívalos sin convertir de nuevo.</span></div>
+    <div class="grid" id="wgIna"></div>
   </section>
 
   <!-- ============ AJUSTES ============ -->
@@ -151,6 +155,7 @@
 <!-- WhenGacha -->
 <dialog id="dWg"><form method="dialog">
   <div class="dhead"><h2>Añadir a WhenGacha <span id="wgN"></span></h2><button value="close" class="x" aria-label="Cerrar">✕</button></div>
+  <p class="okbox" id="wgRepl" hidden></p>
   <label for="wgSkin">Skin</label><select id="wgSkin"></select>
   <label>Vídeo de partida</label>
   <div class="seg" id="wgWhat"><button type="button" data-v="preview" class="on">Vista previa · 1280 px, CRF 27</button><button type="button" data-v="original">Original · 1920 px, CRF 26</button></div>

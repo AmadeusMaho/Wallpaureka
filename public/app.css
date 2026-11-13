@@ -100,6 +100,10 @@ dialog input[type=text],dialog input[type=url],dialog select{width:100%}
 .wecard .info{flex:1;min-width:240px}.wecard h3{margin:0 0 4px}
 .wecard .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 /* WhenGacha */
+.replbar{position:sticky;top:52px;z-index:19;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#2a1f05;border-bottom:1px solid #6b5212;color:#fde68a;padding:7px 18px;font-size:.9rem}
+.card.repl{border-color:var(--warn);box-shadow:0 0 0 2px var(--warn)}
+.inahead{margin-top:26px;border-top:1px solid var(--line);padding-top:16px}.inahead .muted{font-size:.85rem}
+.card.ina .thumb{filter:saturate(.75)}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 .tabs button{border-radius:999px;padding:5px 14px}.tabs button.on{background:var(--acc);border-color:var(--acc);color:#04121c;font-weight:700}
 .tabs button b{opacity:.7;font-weight:600;margin-left:4px}

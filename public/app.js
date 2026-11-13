@@ -292,12 +292,16 @@ $('#dlPick').onclick = async () => { const r = await api('/api/pick-folder', { s
 // ---------- diálogo WhenGacha ----------
 async function askWg(items) {
   if (!items.length || !INFO.whengacha.enabled) return
+  if (REPL && items.length > 1) return toast(`Para reemplazar «${REPL.slug}» elige un solo fondo (o cancela el reemplazo arriba).`, 'e', 7000)
   const n = items.length
   $('#wgN').textContent = n > 1 ? `(${n})` : ''
   const skins = INFO.whengacha.skins
   const q = (S.q || '').toLowerCase(), guess = skins.find(k => q.includes(k.id) || q.includes(k.name.toLowerCase()))?.id
   $('#wgSkin').innerHTML = skins.map(k => `<option value="${k.id}">${esc(k.name)}</option>`).join('')
-  $('#wgSkin').value = guess || store.get('fl:wgskin', skins[0].id)
+  $('#wgSkin').value = REPL ? REPL.skin : guess || store.get('fl:wgskin', skins[0].id)
+  $('#wgSkin').disabled = !!REPL
+  $('#wgRepl').hidden = !REPL
+  if (REPL) $('#wgRepl').textContent = `Reemplazará a «${REPL.slug}» en ${REPL.skinName}, en la misma posición. «${REPL.slug}» pasa a guardados (sigue en R2).`
   const hasOrig = items.some(x => ['desktophut', 'motionbgs', 'we', 'url', 'file'].includes(x.src))
   seg('#wgWhat', hasOrig && items.every(x => !['moewalls', 'wallpaperwaifu'].includes(x.src)) ? 'original' : 'preview')
   const nu = items.filter(ultra).length
@@ -319,10 +323,12 @@ async function askWg(items) {
     if (n === 1) {
       j.slug = $('#wgSlug').value.trim(); j.official = $('#wgOfficial').checked
       j.credit = { title: $('#wgCTitle').value.trim(), author: $('#wgCAuthor').value.trim(), link: $('#wgCLink').value.trim(), note: $('#wgCNote').value.trim() }
+      if (REPL) j.replace = REPL.slug
     }
     return j
   })
   await enqueue(jobs)
+  if (REPL) setReplace(null)
 }
 $('#wgOfficial').onchange = () => $('#wgCredit').hidden = $('#wgOfficial').checked
 // Igual que lib/whengacha.mjs (para proponer el nombre en el diálogo).
@@ -370,7 +376,7 @@ function renderQueue(list) {
   el.innerHTML = ''
   for (const j of [...list].sort((a, b) => order[a.status] - order[b.status] || (a.status === 'cola' ? a.id - b.id : b.id - a.id))) {
     const d = document.createElement('div'); d.className = `job ${j.status}`
-    const kind = { download: 'Descarga', whengacha: 'WhenGacha', 'wg-build': 'Compilar', 'wg-push': 'Subir a la web', 'wg-remove': 'Quitar' }[j.kind] || j.kind
+    const kind = { download: 'Descarga', whengacha: 'WhenGacha', 'wg-build': 'Compilar', 'wg-push': 'Subir a la web', 'wg-remove': 'Quitar', 'wg-activate': 'Reactivar' }[j.kind] || j.kind
     d.innerHTML = `<div class="jt"></div><div class="jn"></div><div class="muted" style="font-size:.78rem">${kind}${j.srcName ? ` · ${esc(j.srcName)}` : ''}<span class="state ${j.status}">${STATE[j.status]}</span></div>
       ${j.status === 'activo' ? `<div class="bar"><i style="width:${Math.round(j.progress * 100)}%"></i></div>` : ''}<div class="js"></div><div class="ja"></div>`
     if (j.thumb) d.querySelector('.jt').style.backgroundImage = `url("${j.thumb.replace(/"/g, '%22')}")`
@@ -379,7 +385,7 @@ function renderQueue(list) {
     if (j.status === 'cola' || j.status === 'activo') b('Cancelar', () => api('/api/queue/cancel', { id: j.id }).then(pollQueue))
     if (j.status === 'error' || j.status === 'cancelado') b('Reintentar', () => api('/api/queue/retry', { id: j.id }).then(pollQueue))
     if (j.status === 'listo' && j.result?.file) b('Mostrar en la carpeta', () => api('/api/open', { job: j.id }))
-    if (j.status === 'listo' && j.kind === 'whengacha') b('Ver en WhenGacha', () => { setView('wg'); WG.skin = j.result?.skin || WG.skin; loadWg() })
+    if (j.status === 'listo' && (j.kind === 'whengacha' || j.kind === 'wg-activate')) b('Ver en WhenGacha', () => { setView('wg'); WG.skin = j.result?.skin || WG.skin; loadWg() })
     el.append(d)
   }
 }
@@ -461,7 +467,7 @@ function renderWg() {
   k.fondos.forEach((f, i) => {
     const c = document.createElement('div'); c.className = 'card'
     c.innerHTML = `<div class="thumb"><span class="badge">${i + 1}</span></div><div class="body"><div class="name"></div><div class="credit"></div></div>
-      <div class="acts"><button title="Antes en la rotación" data-a="up" ${i ? '' : 'disabled'}>↑</button><button title="Después en la rotación" data-a="down" ${i < k.fondos.length - 1 ? '' : 'disabled'}>↓</button><span class="sp"></span><button class="danger" data-a="del">Quitar</button></div>`
+      <div class="acts"><button title="Antes en la rotación" data-a="up" ${i ? '' : 'disabled'}>↑</button><button title="Después en la rotación" data-a="down" ${i < k.fondos.length - 1 ? '' : 'disabled'}>↓</button><span class="sp"></span><button data-a="repl" title="Cambiarlo por otro en la misma posición">Reemplazar</button><button class="danger" data-a="del">Quitar</button></div>`
     c.querySelector('.thumb').style.backgroundImage = `url("${f.poster}")`
     c.querySelector('.name').textContent = f.name
     const cr = c.querySelector('.credit'); cr.textContent = f.credit || 'sin crédito en «Acerca de»'; if (!f.credit) cr.classList.add('none')
@@ -471,9 +477,49 @@ function renderWg() {
     c.querySelector('[data-a=up]').onclick = () => wgMove(f.name, -1)
     c.querySelector('[data-a=down]').onclick = () => wgMove(f.name, 1)
     c.querySelector('[data-a=del]').onclick = () => wgDel(f.name, k.name)
+    c.querySelector('[data-a=repl]').onclick = () => setReplace({ skin: k.id, slug: f.name, skinName: k.name })
+    if (REPL && REPL.skin === k.id && REPL.slug === f.name) c.classList.add('repl')
     g.append(c)
   })
+  // Guardados sin usar
+  $('#wgInaTitle').textContent = `Guardados sin usar (${k.inactive.length})`
+  const gi = $('#wgIna'); gi.innerHTML = ''
+  if (!k.inactive.length) gi.innerHTML = '<div class="empty">No hay vídeos guardados fuera de la rotación para esta skin. Lo que quites aparecerá aquí.</div>'
+  for (const f of k.inactive) {
+    const c = document.createElement('div'); c.className = 'card ina'
+    const here = REPL && REPL.skin === k.id
+    c.innerHTML = `<div class="thumb"><span class="badge">guardado</span></div><div class="body"><div class="name"></div><div class="credit"></div></div>
+      <div class="acts"><span class="sp"></span><button class="primary" data-a="on"></button></div>`
+    if (f.poster) c.querySelector('.thumb').style.backgroundImage = `url("${f.poster}")`
+    c.querySelector('.name').textContent = f.name
+    const cr = c.querySelector('.credit'); cr.textContent = `${f.credit || 'crédito: se busca al activarlo'} · ${(f.size / 1048576).toFixed(1)} MB`
+    const th = c.querySelector('.thumb')
+    c.addEventListener('mouseenter', () => { if (th.querySelector('video')) return; const v = document.createElement('video'); Object.assign(v, { src: f.video, muted: true, loop: true, autoplay: true, playsInline: true }); v.oncanplay = () => v.classList.add('ready'); th.append(v) })
+    c.addEventListener('mouseleave', () => th.querySelector('video')?.remove())
+    const b = c.querySelector('[data-a=on]')
+    b.textContent = here ? `Poner en lugar de «${REPL.slug}»` : 'Activar'
+    b.title = here ? 'Ocupa la misma posición; el reemplazado pasa a guardados' : 'Lo añade al final de la rotación'
+    b.onclick = () => {
+      enqueue([{ kind: 'wg-activate', title: `${here ? 'Reemplazar' : 'Activar'} ${f.name}`, srcName: k.name, thumb: f.poster, skin: k.id, slug: f.name, replace: here ? REPL.slug : undefined }])
+      if (here) setReplace(null)
+    }
+    gi.append(c)
+  }
 }
+
+// ---------- reemplazar ----------
+let REPL = null
+function setReplace(r) {
+  REPL = r
+  $('#replBar').hidden = !r
+  if (r) {
+    $('#replTxt').innerHTML = `Reemplazando <b>${esc(r.slug)}</b> en ${esc(r.skinName)}: elige uno de «Guardados sin usar» o busca uno nuevo en «Buscar» o «Wallpaper Engine» y pulsa «Añadir a WhenGacha».`
+    if (view === 'wg') $('#wgIna').scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+  if (view === 'wg' && WG.state) renderWg()
+}
+$('#replCancel').onclick = () => setReplace(null)
+$('#replGo').onclick = () => { if (REPL) { WG.skin = REPL.skin; setView('wg'); setTimeout(() => $('#wgIna').scrollIntoView({ behavior: 'smooth' }), 300) } }
 async function wgMove(slug, dir) { try { WG.state = await api('/api/wg/move', { skin: WG.skin, slug, dir }); renderWg() } catch (e) { toast(e.message, 'e') } }
 function confirmBox(text, extra = '') { $('#askText').textContent = text; $('#askExtra').innerHTML = extra; return ask($('#dAsk')) }
 async function wgDel(slug, name) {

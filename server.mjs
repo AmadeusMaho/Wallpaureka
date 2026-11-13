@@ -155,10 +155,11 @@ const RUNNERS = {
     const size = fs.statSync(mp4).size
     if (size > 4.5 * 1048576) j.warn.push(`pesa ${mb(size)} (prueba CRF 28–29)`)
     const credit = o.credit || { title: wgTitle(d.title), author: d.author || '', link: d.author ? d.source : (d.source || d.post), note: d.note || '' }
-    const msg = await WG.publish({ skin: o.skin, slug, mp4, webp, credit, official: o.official }, (p, t) => step(.8 + p * .2, t))
+    const msg = await WG.publish({ skin: o.skin, slug, mp4, webp, credit, official: o.official, replace: o.replace }, (p, t) => step(.8 + p * .2, t))
     if (!v.local) fs.rmSync(v.file, { force: true })
     return { result: { slug, skin: o.skin, dims: info.dims, sizeText: mb(size) }, text: `${msg} (${info.dims}, ${mb(size)})${j.warn.length ? ' · ' + j.warn.join(' ') : ''}` }
   },
+  async 'wg-activate'(j, step) { if (!WG) throw new Error('Perfil WhenGacha inactivo'); return { result: { skin: j.input.skin }, text: await WG.activate(j.input, step) } },
   async 'wg-remove'(j) { if (!WG) throw new Error('Perfil WhenGacha inactivo'); return { text: await WG.remove(j.input) } },
   async 'wg-build'(j, step) { if (!WG) throw new Error('Perfil WhenGacha inactivo'); return { text: await WG.build(step) } },
   async 'wg-push'(j, step) { if (!WG) throw new Error('Perfil WhenGacha inactivo'); return { text: await WG.push(j.input.message, step) } },
@@ -272,6 +273,7 @@ const server = http.createServer(async (req, res) => {
       if (P === '/media') return proxyMedia(req, res, url.searchParams.get('u'), url.searchParams.get('r'))
       if (P.startsWith('/we/')) { const [, , id, ...rest] = P.split('/'); const f = localFile(id, decodeURIComponent(rest.join('/'))); return f ? serveFile(req, res, f) : json(res, 404, {}) }
       if (P === '/api/wg/state') { if (!WG) return json(res, 200, { enabled: false, error: wgError }); return json(res, 200, { enabled: true, ...WG.state() }) }
+      if (P.startsWith('/wg/backup/') && WG) { const f = WG.backupFile(decodeURIComponent(P.slice(11))); return f ? serveFile(req, res, f) : json(res, 404, {}) }
       if (P.startsWith('/wg/poster/') && WG) { const f = WG.posterFile(decodeURIComponent(P.slice(11))); return f ? serveFile(req, res, f) : json(res, 404, {}) }
     }
     if (req.method === 'GET' && P.startsWith('/work/')) { const f = path.resolve(WORK, decodeURIComponent(P.slice(6))); return f.startsWith(WORK + path.sep) ? serveFile(req, res, f) : json(res, 400, {}) }
