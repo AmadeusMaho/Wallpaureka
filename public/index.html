@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wallpaureka!</title>
+<link rel="icon" href="/icono.svg">
+<link rel="stylesheet" href="/app.css">
+</head><body>
+<header>
+  <div class="brand"><img src="/icono.svg" alt=""> Wallpaureka!</div>
+  <nav id="nav">
+    <button data-v="buscar" class="on">Buscar</button>
+    <button data-v="we">Wallpaper Engine</button>
+    <button data-v="wg" hidden>WhenGacha</button>
+    <button data-v="ajustes">Ajustes</button>
+  </nav>
+  <span class="grow"></span>
+  <button id="btnQueue" class="qbtn" title="Ver la cola de descargas">Cola <b id="qCount">0</b></button>
+</header>
+
+<div class="layout">
+<main>
+  <!-- ============ BUSCAR ============ -->
+  <section id="v-buscar" class="view">
+    <div class="hero">
+      <form id="fSearch" class="searchrow" autocomplete="off">
+        <input id="q" type="search" placeholder="Busca un fondo (arknights, lofi, genshin…) o pega un enlace" aria-label="Buscar o pegar enlace">
+        <button class="primary" id="btnSearch">Buscar</button>
+      </form>
+      <div class="chips" id="srcChips"></div>
+      <p class="sub">Acepta enlaces de MoeWalls, WallpaperWaifu, DesktopHut, MotionBGs, del Steam Workshop (Wallpaper Engine) o un enlace directo a un .mp4/.webm. <a href="#" id="pickLocal">¿Tienes el vídeo en el PC?</a><input type="file" id="localFile" accept="video/*,.webm,.mkv,.mov" hidden></p>
+      <div class="status" id="sStatus" hidden><div class="bar"><i></i></div><span></span></div>
+      <div class="notes" id="sNotes"></div>
+    </div>
+
+    <div class="toolbar" id="sTools" hidden>
+      <input id="sFilter" type="search" placeholder="Filtrar por nombre…">
+      <select id="sSrc"><option value="">Todas las webs</option></select>
+      <select id="sSort"><option value="rel">Orden de cada web</option><option value="votes">Más votados</option><option value="res">Mayor resolución</option><option value="title">Nombre (A–Z)</option></select>
+      <label class="check"><input type="checkbox" id="sHideLow"> Ocultar baja resolución</label>
+      <label class="check"><input type="checkbox" id="sOnlySel"> Solo elegidos</label>
+      <span class="grow"></span>
+      <span class="muted" id="sCount"></span>
+    </div>
+    <div class="grid" id="sGrid"></div>
+  </section>
+
+  <!-- ============ WALLPAPER ENGINE ============ -->
+  <section id="v-we" class="view" hidden>
+    <div class="hero">
+      <form id="fWorkshop" class="searchrow" autocomplete="off">
+        <input id="wLink" type="search" placeholder="Pega un enlace del Steam Workshop (steamcommunity.com/sharedfiles/filedetails/?id=…)" aria-label="Enlace del Workshop">
+        <button class="primary">Ver</button>
+      </form>
+      <p class="sub">Sin contraseñas: suscríbete en Steam, Wallpaper Engine lo descarga en tu PC y Wallpaureka! toma el vídeo de esa carpeta. Las <b>escenas</b> y <b>webs</b> no son vídeos y no se pueden descargar como .mp4.</p>
+      <div id="wResult"></div>
+    </div>
+    <div class="toolbar">
+      <b>Mis suscripciones</b>
+      <input id="wFilter" type="search" placeholder="Filtrar por nombre o etiqueta…">
+      <select id="wType"><option value="video">Solo vídeos</option><option value="">Todos los tipos</option></select>
+      <button id="wRefresh" title="Volver a leer la carpeta de Steam">↻ Releer</button>
+      <label class="check"><input type="checkbox" id="wOnlySel"> Solo elegidos</label>
+      <span class="grow"></span>
+      <span class="muted" id="wCount"></span>
+    </div>
+    <div class="grid" id="wGrid"></div>
+  </section>
+
+  <!-- ============ WHENGACHA ============ -->
+  <section id="v-wg" class="view" hidden>
+    <div class="toolbar wgbar">
+      <b>Fondos de las skins</b><span class="muted" id="wgRoot"></span>
+      <span class="grow"></span>
+      <span id="wgPending" class="pill">…</span>
+      <button id="wgBuild" title="npm run build:prod, para comprobar que todo compila">Compilar</button>
+      <button id="wgPush" class="primary" title="Compila, guarda un commit y hace push: Botkeep lo despliega">Subir a la web</button>
+    </div>
+    <div class="tabs" id="wgTabs"></div>
+    <p class="sub" id="wgHint"></p>
+    <div class="grid" id="wgGrid"></div>
+  </section>
+
+  <!-- ============ AJUSTES ============ -->
+  <section id="v-ajustes" class="view settings" hidden>
+    <h2>Ajustes</h2>
+    <div class="card pad">
+      <h3>Carpeta de descargas</h3>
+      <div class="row"><input id="cfgDir" type="text"><button id="cfgPick">Elegir…</button><button id="cfgOpen">Abrir</button></div>
+      <p class="sub">Aquí se guarda lo que descargas (puedes elegir otra carpeta en cada descarga).</p>
+    </div>
+    <div class="card pad"><h3>Conversión (ffmpeg)</h3><p id="cfgFf"></p></div>
+    <div class="card pad"><h3>Steam / Wallpaper Engine</h3><p id="cfgSteam"></p></div>
+    <div class="card pad">
+      <h3>Perfil WhenGacha <span class="muted">(opcional)</span></h3>
+      <label class="check"><input type="checkbox" id="cfgWgOn"> Activar: publicar fondos en las skins de WhenGacha (R2, skins.ts, créditos, compilar y subir)</label>
+      <label for="cfgWgRoot">Carpeta «app» de WhenGacha</label>
+      <div class="row"><input id="cfgWgRoot" type="text" placeholder="C:\…\Whengacha\app"><button id="cfgWgPick">Elegir…</button></div>
+      <p class="sub" id="cfgWgState"></p>
+    </div>
+    <div class="row end"><button class="primary" id="cfgSave">Guardar ajustes</button></div>
+  </section>
+</main>
+
+<aside id="queue">
+  <div class="qhead"><h2>Cola</h2><span class="grow"></span><button id="qClear" class="small" title="Quitar de la lista lo terminado">Limpiar terminados</button><button id="qClose" class="small only-narrow">✕</button></div>
+  <div id="qList"></div>
+</aside>
+</div>
+
+<div class="selbar" id="selbar" hidden>
+  <span id="selTxt"></span><span class="grow"></span>
+  <button id="selCopy" title="Copia títulos y enlaces">Copiar lista</button>
+  <button id="selClear">Quitar selección</button>
+  <button id="selWg" hidden>Añadir a WhenGacha…</button>
+  <button class="primary" id="selDl">Descargar…</button>
+</div>
+
+<!-- Ficha de un fondo -->
+<dialog id="dItem" class="wide"><form method="dialog">
+  <div class="dhead"><h2 id="iTitle"></h2><button value="close" class="x" aria-label="Cerrar">✕</button></div>
+  <div class="ibody">
+    <div class="iplayer"><video id="iVideo" muted loop autoplay playsinline controls></video><p class="muted" id="iNoVideo" hidden></p></div>
+    <div class="iinfo">
+      <dl id="iMeta"></dl>
+      <p class="warnbox" id="iProblem" hidden></p>
+      <div class="col" id="iActs"></div>
+    </div>
+  </div>
+</form></dialog>
+
+<!-- Descargar -->
+<dialog id="dDl"><form method="dialog">
+  <div class="dhead"><h2>Descargar <span id="dlN"></span></h2><button value="close" class="x" aria-label="Cerrar">✕</button></div>
+  <label>Qué vídeo</label>
+  <div class="seg" id="dlWhat"><button type="button" data-v="original" class="on">Original (mejor calidad)</button><button type="button" data-v="preview">Vista previa (más ligera)</button></div>
+  <p class="sub" id="dlWhatHint"></p>
+  <label for="dlFmt">Formato</label>
+  <select id="dlFmt">
+    <option value="none">Tal cual, sin convertir (más rápido)</option>
+    <option value="hd">MP4 H.264 hasta 1920 px, alta calidad (compatible con todo)</option>
+    <option value="full">MP4 H.264 a su tamaño, hasta 4K</option>
+    <option value="light">MP4 ligero: 1280 px, 24 fps</option>
+  </select>
+  <p class="sub" id="dlFfWarn" hidden>No hay ffmpeg: solo se puede descargar tal cual (ver Ajustes).</p>
+  <label class="check" id="dlCropRow"><input type="checkbox" id="dlCrop"> Recortar al centro en 16:9 los ultrapanorámicos <span class="muted" id="dlCropN"></span></label>
+  <label class="check"><input type="checkbox" id="dlAudio"> Conservar el sonido (si lo tiene)</label>
+  <label for="dlDir">Carpeta</label>
+  <div class="row"><input id="dlDir" type="text"><button type="button" id="dlPick">Elegir…</button></div>
+  <div class="row end"><button value="close">Cancelar</button><button value="ok" class="primary" id="dlOk">Añadir a la cola</button></div>
+</form></dialog>
+
+<!-- WhenGacha -->
+<dialog id="dWg"><form method="dialog">
+  <div class="dhead"><h2>Añadir a WhenGacha <span id="wgN"></span></h2><button value="close" class="x" aria-label="Cerrar">✕</button></div>
+  <label for="wgSkin">Skin</label><select id="wgSkin"></select>
+  <label>Vídeo de partida</label>
+  <div class="seg" id="wgWhat"><button type="button" data-v="preview" class="on">Vista previa · 1280 px, CRF 27</button><button type="button" data-v="original">Original · 1920 px, CRF 26</button></div>
+  <label class="check"><input type="checkbox" id="wgCrop"> Recortar al centro en 16:9 los ultrapanorámicos <span class="muted" id="wgCropN"></span></label>
+  <div id="wgSingle">
+    <label for="wgSlug">Nombre del archivo (minúsculas y guiones)</label><input id="wgSlug" type="text">
+    <p class="sub">Un vídeo nuevo necesita un nombre nuevo: los navegadores guardan cada vídeo un año.</p>
+    <label class="check"><input type="checkbox" id="wgOfficial"> Es oficial del juego (sin línea de créditos)</label>
+    <div id="wgCredit">
+      <label for="wgCTitle">Título</label><input id="wgCTitle" type="text">
+      <label for="wgCAuthor">Autor (vacío si no se sabe)</label><input id="wgCAuthor" type="text">
+      <label for="wgCLink">Enlace al original</label><input id="wgCLink" type="url">
+      <label for="wgCNote">Nota (opcional)</label><input id="wgCNote" type="text">
+    </div>
+  </div>
+  <p class="sub">Se convierte, se sube a R2 y se añade a la skin con su crédito, uno detrás de otro (≈1 min por fondo). Después falta «Subir a la web».</p>
+  <div class="row end"><button value="close">Cancelar</button><button value="ok" class="primary">Añadir a la cola</button></div>
+</form></dialog>
+
+<!-- Confirmación genérica -->
+<dialog id="dAsk"><form method="dialog"><p id="askText"></p><div id="askExtra"></div><div class="row end"><button value="no">Cancelar</button><button value="yes" class="primary" id="askOk">Aceptar</button></div></form></dialog>
+
+<div id="toasts"></div>
+<script src="/app.js"></script>
+</body></html>

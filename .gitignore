@@ -1,0 +1,4 @@
+datos/
+node_modules/
+*.part
+*.tmp.mp4
